@@ -6,6 +6,7 @@
 </div>
 
 ## :loudspeaker: News!
+- **[2026/01/27]** Spatial Forcing is accepted by ICLR 2026!🎉
 - **[2025/10/28]** We released our codes based on Pi_0 in real world! Everyone is welcome to use it!🎉
 - **[2025/10/24]** 🏆 Congradulations to Jialong! He and our SF got the **second place** in **Agibot World Challenge** as well as 5000$ prize💰!
 - **[2025/10/18]** Our paper won the 🥇**first place** in the [daily list](https://huggingface.co/papers/2510.12276) and 🥉**third place** in the [weekly list](https://huggingface.co/papers/week/2025-W42) in HF! ⭐

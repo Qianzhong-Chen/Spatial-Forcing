@@ -63,6 +63,10 @@ Next, you need to compute the normalization statistics for the training data.
 ```bash
 uv run scripts/compute_norm_stats.py --config-name <config_name>
 ```
+```bash
+# CQZ train libero
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python scripts/train_align_pytorch.py pi0_align_libero_low_mem --exp_name test_0406
+```
 
 Finally, launch training using one of these modes:
 ```bash

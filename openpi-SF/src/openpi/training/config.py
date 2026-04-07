@@ -792,9 +792,10 @@ _CONFIGS = [
         align_loss_coeff=0.5,
         #
         num_train_steps=20_000,
-        batch_size=2,
+        batch_size=16,
         ema_decay=None,
-        wandb_enabled=False,
+        wandb_enabled=True,
+        checkpoint_base_dir="/nfs_us/david_chen/openpi_sf_ckpt"
     ),
     
     

@@ -46,6 +46,7 @@ import openpi.shared.normalize as _normalize
 import openpi.training.config as _config
 import openpi.training.data_loader as _data
 
+from peft import LoraConfig, inject_adapter_in_model
 from vggt.models.vggt import VGGT
 
 
@@ -468,6 +469,33 @@ def train_loop(config: _config.TrainConfig):
             strict=False,
         )
         logging.info(f"Loaded PyTorch weights from {config.pytorch_weight_path}")
+
+    # Apply LoRA in-place (inject_adapter_in_model doesn't change module hierarchy)
+    # then freeze all non-LoRA params in the affected sub-modules.
+    raw_model = model.module if isinstance(model, torch.nn.parallel.DistributedDataParallel) else model
+
+    def apply_lora_inplace(submodule, r, lora_alpha, target_modules):
+        lora_cfg = LoraConfig(
+            r=r, lora_alpha=lora_alpha, lora_dropout=0.0, bias="none",
+            target_modules=target_modules,
+        )
+        inject_adapter_in_model(lora_cfg, submodule)
+        # Freeze everything except the injected lora_ weights
+        for name, param in submodule.named_parameters():
+            param.requires_grad = "lora_" in name
+
+    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+    if "lora" in getattr(config.model, "paligemma_variant", ""):
+        apply_lora_inplace(raw_model.paligemma_with_expert.paligemma, r=16, lora_alpha=16, target_modules=target_modules)
+        logging.info("Applied LoRA r=16 to paligemma")
+    if "lora" in getattr(config.model, "action_expert_variant", ""):
+        apply_lora_inplace(raw_model.paligemma_with_expert.gemma_expert, r=32, lora_alpha=32, target_modules=target_modules)
+        logging.info("Applied LoRA r=32 to gemma_expert")
+
+    total = sum(p.numel() for p in model.parameters())
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    logging.info(f"Trainable params: {trainable/1e6:.1f}M / {total/1e6:.1f}M ({100*trainable/total:.1f}%)")
+
     if config.vggt_weight_path is not None:
         vggt_path = os.path.join(config.vggt_weight_path, "model.pt")
         if not os.path.exists(vggt_path):
@@ -481,9 +509,9 @@ def train_loop(config: _config.TrainConfig):
     decay_steps = config.lr_schedule.decay_steps
     end_lr = config.lr_schedule.decay_lr
 
-    # Create optimizer with config parameters
+    # Create optimizer — only trainable params (frozen base weights excluded)
     optim = torch.optim.AdamW(
-        list(model.parameters()) + list(align_projector.parameters()),
+        [p for p in model.parameters() if p.requires_grad] + list(align_projector.parameters()),
         lr=peak_lr,
         betas=(config.optimizer.b1, config.optimizer.b2),
         eps=config.optimizer.eps,
@@ -561,12 +589,11 @@ def train_loop(config: _config.TrainConfig):
             # Backward pass
             loss.backward()
 
-            # Log memory usage after backward pass
-            if global_step < 5 and is_main and torch.cuda.is_available():
-                log_memory_usage(device, global_step, "after_backward")
-
             # Gradient clipping
-            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=config.optimizer.clip_gradient_norm)
+            grad_norm = torch.nn.utils.clip_grad_norm_(
+                [p for p in model.parameters() if p.requires_grad] + list(align_projector.parameters()),
+                max_norm=config.optimizer.clip_gradient_norm,
+            )
 
             # Optimizer step
             optim.step()

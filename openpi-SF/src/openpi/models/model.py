@@ -246,6 +246,19 @@ class BaseModelConfig(abc.ABC):
     def load_pytorch(self, train_config, weight_path: str):
         logger.info(f"train_config: {train_config}")
         model = pi0_pytorch.PI0Pytorch(config=train_config.model)
+        # Apply LoRA in-place before loading weights so the checkpoint keys match
+        from peft import LoraConfig, inject_adapter_in_model
+        _lora_targets = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+        if "lora" in getattr(train_config.model, "paligemma_variant", ""):
+            inject_adapter_in_model(
+                LoraConfig(r=16, lora_alpha=16, bias="none", target_modules=_lora_targets),
+                model.paligemma_with_expert.paligemma,
+            )
+        if "lora" in getattr(train_config.model, "action_expert_variant", ""):
+            inject_adapter_in_model(
+                LoraConfig(r=32, lora_alpha=32, bias="none", target_modules=_lora_targets),
+                model.paligemma_with_expert.gemma_expert,
+            )
         safetensors.torch.load_model(model, weight_path)
         return model
 

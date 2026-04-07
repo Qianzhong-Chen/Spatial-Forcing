@@ -779,6 +779,8 @@ _CONFIGS = [
             base_config=DataConfig(prompt_from_task=True),
             extra_delta_transform=True,
         ),
+        checkpoint_base_dir="/nfs_us/david_chen/pi_sf_ckpt",    
+        project_name="pi_sf",
         # --- not change after this line ---
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi0_base/params"),
         pytorch_weight_path='./checkpoints/pi0_base_full_torch',
@@ -795,7 +797,6 @@ _CONFIGS = [
         batch_size=16,
         ema_decay=None,
         wandb_enabled=True,
-        checkpoint_base_dir="/nfs_us/david_chen/openpi_sf_ckpt"
     ),
     
     

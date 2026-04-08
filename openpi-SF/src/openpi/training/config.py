@@ -781,9 +781,12 @@ _CONFIGS = [
         ),
         checkpoint_base_dir="/nfs_us/david_chen/pi_sf_ckpt",    
         project_name="pi_sf",
+        batch_size=14,
+        save_interval=2500,
         # --- not change after this line ---
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi0_base/params"),
-        pytorch_weight_path='./checkpoints/pi0_base_full_torch',
+        # pytorch_weight_path='./checkpoints/pi0_base_full_torch',
+        pytorch_weight_path='/nfs_us/david_chen/pi_sf_ckpt/pi0_align_libero_low_mem/test_0407/5000',
         #
         vggt_weight_path='./checkpoints/vggt',
         vla_layers_align=12,
@@ -794,7 +797,6 @@ _CONFIGS = [
         align_loss_coeff=0.5,
         #
         num_train_steps=20_000,
-        batch_size=16,
         ema_decay=None,
         wandb_enabled=True,
     ),

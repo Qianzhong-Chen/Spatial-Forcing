@@ -109,3 +109,8 @@ You need to write your client script according to your robot. A simple [client e
 ```bash
 uv run examples/simple_client/main.py --env ALOHA
 ```
+
+## Qianzhong eval
+```bash
+TORCHDYNAMO_DISABLE=1 python scripts/serve_policy.py policy:checkpoint --policy.config=pi0_align_libero_low_mem --policy.dir=/nfs_us/david_chen/pi_sf_ckpt/pi0_align_libero_low_mem/test_0407/20000
+```

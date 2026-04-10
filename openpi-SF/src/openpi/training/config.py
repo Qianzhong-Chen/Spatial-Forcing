@@ -801,6 +801,38 @@ _CONFIGS = [
         wandb_enabled=True,
     ),
     
+    ## CQZ reproduction: pi0_libvero_lora
+    TrainConfig(
+        name="pi0_align_libero_low_mem",  # <config_name>
+        model=pi0_config.Pi0Config(pi05=True, action_horizon=10,
+                                   paligemma_variant="gemma_2b_lora", 
+                                   action_expert_variant="gemma_300m_lora"),
+        data=LeRobotLiberoDataConfig(
+            repo_id="physical-intelligence/libero",
+            base_config=DataConfig(prompt_from_task=True),
+            extra_delta_transform=False,
+        ),
+        checkpoint_base_dir="/nfs_us/david_chen/pi_sf_ckpt",    
+        project_name="pi_sf",
+        batch_size=16,
+        save_interval=2500,
+        # --- not change after this line ---
+        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
+        pytorch_weight_path='/nfs_us/david_chen/pi_pytorch_ckpt/pi05_base_full_torch',
+        #
+        vggt_weight_path='/nfs_us/david_chen/vggt',
+        vla_layers_align=12,
+        vggt_layers_align=-1,
+        pooling_func='bilinear',
+        use_vggt_pe=True,
+        use_vlm_norm=True,
+        align_loss_coeff=0.5,
+        #
+        num_train_steps=20_000,
+        ema_decay=None,
+        wandb_enabled=True,
+    ),
+    
     
     # Personal Tasks
     TrainConfig(
